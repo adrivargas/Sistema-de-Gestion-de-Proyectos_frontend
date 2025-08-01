@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import axios from "../api/axios";
 import { useNavigate } from "react-router-dom";
 
-interface User {
+export interface User {
   id: number;
   username: string;
   email: string;
@@ -11,8 +11,8 @@ interface User {
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: any) => Promise<void>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (data: any) => Promise<User>;
   logout: () => void;
   token: string | null;
 }
@@ -29,40 +29,45 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (token) {
-      axios.get("/auth/me", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
+      axios
+        .get("/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
         .then((res) => setUser(res.data))
         .catch(() => logout());
     }
   }, [token]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<User> => {
     const res = await axios.post("/auth/login", { email, password });
     const token = res.data.access_token;
     localStorage.setItem("token", token);
     setToken(token);
 
-    // Cargar el usuario inmediatamente después del login
     const userRes = await axios.get("/auth/me", {
       headers: { Authorization: `Bearer ${token}` },
     });
-    setUser(userRes.data);
 
-    navigate("/dashboard");
+    const user: User = userRes.data;
+    setUser(user);
+
+    return user;
   };
 
-  const register = async (data: any) => {
+  const register = async (data: any): Promise<User> => {
     const res = await axios.post("/auth/register", data);
     const token = res.data.access_token;
     localStorage.setItem("token", token);
     setToken(token);
+
     const userRes = await axios.get("/auth/me", {
       headers: { Authorization: `Bearer ${token}` },
     });
-    setUser(userRes.data);
 
-    navigate("/dashboard");
+    const user: User = userRes.data;
+    setUser(user);
+
+    return user;
   };
 
   const logout = () => {

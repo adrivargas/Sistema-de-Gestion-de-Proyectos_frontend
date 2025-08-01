@@ -1,42 +1,68 @@
-import { Routes, Route, Navigate } from "react-router-dom";
-import Login from "./auth/Login";
-import Register from "./auth/Register";
-import Dashboard from "./Dashboard/Dashboard";
-import CrearProyecto from "./pages/CrearProyecto";
-import DetalleProyecto from "./Dashboard/DetalleProyecto";
-import EditarProyecto from "./Dashboard/EditarProyecto";
-import { useAuth } from "./context/AuthContext";
+import React from 'react';
+import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import Login from './auth/Login';
+import Dashboard from './Dashboard/Dashboard';
+import CrearProyecto from './pages/CrearProyecto';
+import DetalleProyecto from './Dashboard/DetalleProyecto';
+import EditarProyecto from './Dashboard/EditarProyecto';
+import TiposProyecto from './pages/TiposProyectos';
+import { useAuth } from './context/AuthContext';
 
-const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+const PrivateRoute = ({ children }: { children: JSX.Element }) => {
   const { token } = useAuth();
   return token ? children : <Navigate to="/login" />;
 };
 
+const ProtectedRoute = ({ children }: { children: JSX.Element }) => {
+  const { token, user } = useAuth();
+  return token && user?.role === 'admin' ? children : <Navigate to="/dashboard" />;
+};
+
 const AppRoutes = () => {
+  const { token, user } = useAuth();
+
   return (
     <Routes>
+      {/* Login */}
       <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
 
+      {/* Dashboard */}
       <Route path="/dashboard" element={
-        <ProtectedRoute><Dashboard /></ProtectedRoute>
+        <PrivateRoute>
+          <Dashboard />
+        </PrivateRoute>
       } />
 
+      {/* Crear Proyecto */}
       <Route path="/crear" element={
-        <ProtectedRoute><CrearProyecto /></ProtectedRoute>
+        <PrivateRoute>
+          <CrearProyecto />
+        </PrivateRoute>
       } />
 
-      {/* RUTA PARA VER DETALLE DEL PROYECTO */}
+      {/* Detalle del Proyecto */}
       <Route path="/proyecto/:id" element={
-        <ProtectedRoute><DetalleProyecto /></ProtectedRoute>
+        <PrivateRoute>
+          <DetalleProyecto />
+        </PrivateRoute>
       } />
 
-      {/* RUTA PARA EDITAR PROYECTO */}
+      {/* Editar Proyecto */}
       <Route path="/proyecto/:id/editar" element={
-        <ProtectedRoute><EditarProyecto /></ProtectedRoute>
+        <PrivateRoute>
+          <EditarProyecto />
+        </PrivateRoute>
       } />
 
-      <Route path="*" element={<Navigate to="/login" />} />
+      {/* Tipos de Proyecto (solo para admins) */}
+      <Route path="/tipos-proyecto" element={
+        <ProtectedRoute>
+          <TiposProyecto />
+        </ProtectedRoute>
+      } />
+
+      {/* Redirección por defecto: si tiene token, ir a dashboard; si no, login */}
+      <Route path="*" element={<Navigate to={token ? "/dashboard" : "/login"} />} />
     </Routes>
   );
 };

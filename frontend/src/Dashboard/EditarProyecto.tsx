@@ -1,176 +1,128 @@
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import axios from "../api/axios";
 import {
   Container,
-  TextField,
-  Button,
   Typography,
-  MenuItem,
   Paper,
+  Button,
   Box,
-  Alert
+  Chip,
+  Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
+  Collapse
 } from "@mui/material";
-import { useNavigate, useParams } from "react-router-dom";
-import axios from "../api/axios";
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 
-interface ProjectType {
-  id: number;
-  name: string;
-}
-
-const EditarProyecto = () => {
+const DetalleProyecto = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [types, setTypes] = useState<ProjectType[]>([]);
-  const [form, setForm] = useState({
-    name: "",
-    description: "",
-    project_type_id: "",
-    status: "pendiente",
-    start_date: "",
-    end_date: "",
-    budget: "",
-    owner_id: "" 
-  });
+  const [proyecto, setProyecto] = useState<any>(null);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
-    axios.get("/project-types")
-      .then(res => setTypes(res.data))
-      .catch(() => setError("Error al cargar tipos de proyecto"));
-
     axios.get(`/projects/${id}`)
-      .then(res => {
-        const p = res.data;
-        setForm({
-          name: p.name,
-          description: p.description,
-          project_type_id: p.project_type.id.toString(),
-          status: p.status,
-          start_date: p.start_date,
-          end_date: p.end_date,
-          budget: p.budget.toString(),
-          owner_id: p.owner_id.toString()
-        });
-      })
+      .then(res => setProyecto(res.data))
       .catch(() => setError("No se pudo cargar el proyecto"));
   }, [id]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  interface Window {
+  webkitAudioContext?: typeof AudioContext;
+ }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+    const beep = () => {
+     const audioCtx = new (window.AudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
+    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
+
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.2);
+    };
+
+  const handleDelete = async () => {
     try {
-      await axios.put(`/projects/${id}`, {
-        ...form,
-        budget: parseFloat(form.budget),
-        project_type_id: parseInt(form.project_type_id)
-      });
-      setSuccess("Proyecto actualizado correctamente");
+      await axios.delete(`/projects/${id}`);
+      beep();
+      setSuccess(true);
       setTimeout(() => navigate("/dashboard"), 1500);
     } catch {
-      setError("Error al actualizar el proyecto");
+      setError("No se pudo eliminar el proyecto");
     }
   };
 
+  if (error) {
+    return <Alert severity="error" sx={{ mt: 4 }}>{error}</Alert>;
+  }
+
+  if (!proyecto) return null;
+
   return (
     <Container maxWidth="md">
-      <Paper elevation={4} sx={{ p: 5, mt: 6, backgroundColor: "#fefefe" }}>
-        <Typography variant="h4" gutterBottom sx={{ fontWeight: 600 }}>
-          Editar Proyecto
+      <Paper elevation={4} sx={{ p: 4, mt: 6 }}>
+        <Typography variant="h4" fontWeight={600} gutterBottom>
+          {proyecto.name}
         </Typography>
+        <Typography variant="subtitle1" sx={{ mb: 2 }}>
+          {proyecto.description}
+        </Typography>
+        <Chip label={`Tipo: ${proyecto.project_type.name}`} sx={{ mb: 2 }} />
+        <Typography>Estado: {proyecto.status}</Typography>
+        <Typography>Inicio: {proyecto.start_date}</Typography>
+        <Typography>Fin: {proyecto.end_date}</Typography>
+        <Typography>Presupuesto: ${proyecto.budget}</Typography>
+        <Typography>Propietario ID: {proyecto.owner_id}</Typography>
 
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+        <Collapse in={success}>
+          <Alert
+            icon={<CheckCircleIcon fontSize="inherit" />}
+            severity="success"
+            sx={{ mt: 3 }}
+          >
+            Proyecto eliminado correctamente
+          </Alert>
+        </Collapse>
 
-        <Box component="form" onSubmit={handleSubmit} sx={{ display: "grid", gap: 2 }}>
-          <TextField
-            label="Nombre del Proyecto"
-            name="name"
-            value={form.name}
-            onChange={handleChange}
-            fullWidth
-            required
-          />
-          <TextField
-            label="Descripción"
-            name="description"
-            value={form.description}
-            onChange={handleChange}
-            fullWidth
-            multiline
-            rows={3}
-            required
-          />
-          <TextField
-            label="Tipo de proyecto"
-            name="project_type_id"
-            select
-            value={form.project_type_id}
-            onChange={handleChange}
-            fullWidth
-            required
-          >
-            {types.map((type) => (
-              <MenuItem key={type.id} value={type.id}>{type.name}</MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            label="Estado"
-            name="status"
-            select
-            value={form.status}
-            onChange={handleChange}
-            fullWidth
-            required
-          >
-            <MenuItem value="pendiente">Pendiente</MenuItem>
-            <MenuItem value="en progreso">En Progreso</MenuItem>
-            <MenuItem value="completado">Completado</MenuItem>
-          </TextField>
-          <Box display="flex" gap={2}>
-            <TextField
-              label="Fecha inicio"
-              type="date"
-              name="start_date"
-              value={form.start_date}
-              onChange={handleChange}
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              label="Fecha fin"
-              type="date"
-              name="end_date"
-              value={form.end_date}
-              onChange={handleChange}
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-            />
-          </Box>
-          <TextField
-            label="Presupuesto"
-            name="budget"
-            type="number"
-            value={form.budget}
-            onChange={handleChange}
-            fullWidth
-            required
-          />
-          <Box display="flex" justifyContent="flex-end" gap={2}>
-            <Button variant="outlined" onClick={() => navigate("/dashboard")}>
-              Cancelar
-            </Button>
-            <Button type="submit" variant="contained">
-              Guardar Cambios
-            </Button>
-          </Box>
+        <Box mt={4} display="flex" gap={2}>
+          <Button variant="outlined" onClick={() => navigate("/dashboard")}>
+            Volver
+          </Button>
+          <Button variant="contained" onClick={() => navigate(`/editar/${id}`)}>
+            Editar
+          </Button>
+          <Button variant="contained" color="error" onClick={() => setOpenDialog(true)}>
+            Eliminar
+          </Button>
         </Box>
       </Paper>
+
+      {/* Diálogo de Confirmación */}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>¿Eliminar proyecto?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Esta acción no se puede deshacer. ¿Estás seguro que deseas eliminar este proyecto?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
+          <Button onClick={handleDelete} color="error">Eliminar</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
 
-export default EditarProyecto;
+export default DetalleProyecto;

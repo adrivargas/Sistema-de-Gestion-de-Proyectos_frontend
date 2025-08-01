@@ -1,20 +1,33 @@
 import React, { useState } from 'react';
 import { Container, TextField, Button, Paper, Typography, Box, Alert } from '@mui/material';
 import { useAuth } from '../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
+import type { User } from '../context/AuthContext';
+
 
 const Login = () => {
   const { login } = useAuth();
+  const navigate = useNavigate();
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setError(null); // limpia error anterior
+
     try {
-      await login(email, password);
-    } catch (err) {
-      setError("Error al iniciar sesión. Revisa tus credenciales.");
+      const user: User = await login(email, password);
+
+
+      if (user.role === 'admin') {
+        navigate('/tipos-proyecto');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch {
+      setError('Credenciales inválidas');
     }
   };
 
@@ -27,7 +40,7 @@ const Login = () => {
         {error && <Alert severity="error">{error}</Alert>}
         <Box component="form" onSubmit={handleSubmit} mt={2}>
           <TextField
-            label="Correo"
+            label="Correo Electronico"
             fullWidth
             margin="normal"
             value={email}
