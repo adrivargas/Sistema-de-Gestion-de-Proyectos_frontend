@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import axios from "../api/axios";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext"; // 👈 IMPORTANTE
+import { useAuth } from "../context/AuthContext"; //  IMPORTANTE
 
 interface ProjectType {
   id: number;
@@ -20,7 +20,7 @@ interface ProjectType {
 
 const CrearProyecto = () => {
   const navigate = useNavigate();
-  const { user } = useAuth(); // 👈 Accede al usuario actual
+  const { user } = useAuth(); //  Accede al usuario actual
 
   const [types, setTypes] = useState<ProjectType[]>([]);
   const [form, setForm] = useState({

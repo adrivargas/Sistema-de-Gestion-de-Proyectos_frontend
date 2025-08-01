@@ -118,7 +118,7 @@ const Login = () => {
               textDecoration: 'none',
             }}
           >
-            Regístrate
+            Regístrate 
           </Link>
         </Typography>
       </Paper>
