@@ -252,36 +252,42 @@ const TiposProyecto = () => {
 
             {/* Formulario de edición de usuario */}
             {editingUser && (
-              <Paper sx={{ mt: 4, p: 3 }}>
+            <Paper sx={{ mt: 4, p: 3 }}>
                 <Typography variant="h6">Editar Usuario</Typography>
                 <form onSubmit={handleUserUpdate}>
-                  <TextField
+                <TextField
+                    id="edit-username"
                     label="Nombre"
                     name="username"
                     value={editingUser.username}
                     onChange={handleChangeUserField}
                     fullWidth sx={{ mb: 2 }}
-                  />
-                  <TextField
+                    required
+                />
+                <TextField
+                    id="edit-email"
                     label="Correo"
                     name="email"
                     value={editingUser.email}
                     onChange={handleChangeUserField}
                     fullWidth sx={{ mb: 2 }}
-                  />
-                  <Select
+                    required
+                />
+                <Select
+                    id="edit-role"
                     name="role"
                     value={editingUser.role}
-                    onChange={handleChangeUserField}
                     fullWidth sx={{ mb: 2 }}
-                  >
+                    required
+                >
                     <MenuItem value="user">User</MenuItem>
                     <MenuItem value="admin">Admin</MenuItem>
-                  </Select>
-                  <Button type="submit" variant="contained">Actualizar</Button>
+                </Select>
+                <Button type="submit" variant="contained">Actualizar</Button>
                 </form>
-              </Paper>
+            </Paper>
             )}
+
           </>
         )}
 

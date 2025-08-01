@@ -68,7 +68,7 @@ const DetalleProyecto = () => {
           <Button variant="outlined" onClick={() => navigate("/dashboard")}>
             Volver
           </Button>
-          <Button variant="contained" onClick={() => navigate(`/editar/${id}`)}>
+          <Button onClick={() => navigate("/editarproyecto/${proyecto.id}")}>
             Editar
           </Button>
           <Button variant="contained" color="error" onClick={() => setOpenDialog(true)}>

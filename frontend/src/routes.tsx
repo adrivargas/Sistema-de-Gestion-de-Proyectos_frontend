@@ -7,6 +7,7 @@ import DetalleProyecto from './Dashboard/DetalleProyecto';
 import EditarProyecto from './Dashboard/EditarProyecto';
 import TiposProyecto from './pages/TiposProyectos';
 import { useAuth } from './context/AuthContext';
+import Register from './auth/Register';
 
 const PrivateRoute = ({ children }: { children: JSX.Element }) => {
   const { token } = useAuth();
@@ -25,7 +26,8 @@ const AppRoutes = () => {
     <Routes>
       {/* Login */}
       <Route path="/login" element={<Login />} />
-
+      {/* Register */}
+      <Route path="/register" element={<Register />} />
       {/* Dashboard */}
       <Route path="/dashboard" element={
         <PrivateRoute>
@@ -48,11 +50,14 @@ const AppRoutes = () => {
       } />
 
       {/* Editar Proyecto */}
-      <Route path="/proyecto/:id/editar" element={
-        <PrivateRoute>
-          <EditarProyecto />
-        </PrivateRoute>
-      } />
+      <Route
+            path="/proyecto/:id/editar"
+            element={
+              <PrivateRoute>
+                <EditarProyecto />
+              </PrivateRoute>
+            }
+          />
 
       {/* Tipos de Proyecto (solo para admins) */}
       <Route path="/tipos-proyecto" element={
