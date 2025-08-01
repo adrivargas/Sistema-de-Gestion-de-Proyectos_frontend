@@ -4,67 +4,92 @@ import axios from "../api/axios";
 import {
   Container,
   Typography,
-  CircularProgress,
+  Paper,
   Button,
   Box,
-  Chip
+  Chip,
+  Alert,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle
 } from "@mui/material";
-
-interface Project {
-  id: number;
-  name: string;
-  description: string;
-  status: string;
-  project_type: {
-    id: number;
-    name: string;
-    color: string;
-  };
-  owner_id: number;
-  start_date: string;
-  end_date: string;
-  budget: number;
-}
 
 const DetalleProyecto = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [project, setProject] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [proyecto, setProyecto] = useState<any>(null);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [openDialog, setOpenDialog] = useState(false);
 
   useEffect(() => {
     axios.get(`/projects/${id}`)
-      .then(res => setProject(res.data))
-      .catch(() => navigate("/dashboard"))
-      .finally(() => setLoading(false));
+      .then(res => setProyecto(res.data))
+      .catch(() => setError("No se pudo cargar el proyecto"));
   }, [id]);
 
-  if (loading) return <CircularProgress />;
+  const handleDelete = async () => {
+    try {
+      await axios.delete(`/projects/${id}`);
+      setSuccess("Proyecto eliminado correctamente");
+      setTimeout(() => navigate("/dashboard"), 1500);
+    } catch {
+      setError("No se pudo eliminar el proyecto");
+    }
+  };
 
-  if (!project) return <Typography>No se encontró el proyecto</Typography>;
+  if (error) {
+    return <Alert severity="error" sx={{ mt: 4 }}>{error}</Alert>;
+  }
+
+  if (!proyecto) return null;
 
   return (
-    <Container sx={{ mt: 4 }}>
-      <Typography variant="h4" gutterBottom>{project.name}</Typography>
-      <Typography variant="subtitle1" gutterBottom>{project.description}</Typography>
-      <Chip label={project.project_type.name} sx={{ backgroundColor: project.project_type.color, color: 'white' }} />
-      <Box mt={2}>
-        <Typography>Estado: {project.status}</Typography>
-        <Typography>Inicio: {project.start_date}</Typography>
-        <Typography>Fin: {project.end_date}</Typography>
-        <Typography>Presupuesto: ${project.budget}</Typography>
-        <Typography>Propietario ID: {project.owner_id}</Typography>
-      </Box>
+    <Container maxWidth="md">
+      <Paper elevation={4} sx={{ p: 4, mt: 6 }}>
+        <Typography variant="h4" fontWeight={600} gutterBottom>
+          {proyecto.name}
+        </Typography>
+        <Typography variant="subtitle1" sx={{ mb: 2 }}>
+          {proyecto.description}
+        </Typography>
+        <Chip label={`Tipo: ${proyecto.project_type.name}`} sx={{ mb: 2 }} />
+        <Typography>Estado: {proyecto.status}</Typography>
+        <Typography>Inicio: {proyecto.start_date}</Typography>
+        <Typography>Fin: {proyecto.end_date}</Typography>
+        <Typography>Presupuesto: ${proyecto.budget}</Typography>
+        <Typography>Propietario ID: {proyecto.owner_id}</Typography>
 
-      <Box mt={3} display="flex" gap={2}>
-        <Button variant="outlined" onClick={() => navigate("/dashboard")}>
-          Volver
-        </Button>
-        <Button variant="contained" color="primary" onClick={() => navigate(`/proyecto/${project.id}/editar`)}>
-          Editar
-        </Button>
-        {/* Aquí luego puedes agregar botón de eliminar */}
-      </Box>
+        {success && <Alert severity="success" sx={{ mt: 3 }}>{success}</Alert>}
+
+        <Box mt={4} display="flex" gap={2}>
+          <Button variant="outlined" onClick={() => navigate("/dashboard")}>
+            Volver
+          </Button>
+          <Button variant="contained" onClick={() => navigate(`/editar/${id}`)}>
+            Editar
+          </Button>
+          <Button variant="contained" color="error" onClick={() => setOpenDialog(true)}>
+            Eliminar
+          </Button>
+        </Box>
+      </Paper>
+
+      {/* Diálogo de Confirmación */}
+      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
+        <DialogTitle>¿Eliminar proyecto?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Esta acción no se puede deshacer. ¿Estás seguro que deseas eliminar este proyecto?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
+          <Button onClick={handleDelete} color="error">Eliminar</Button>
+        </DialogActions>
+      </Dialog>
     </Container>
   );
 };
