@@ -5,63 +5,75 @@ import {
   Container,
   Typography,
   Paper,
+  TextField,
   Button,
   Box,
-  Chip,
   Alert,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogContentText,
-  DialogTitle,
-  Collapse
+  Select,
+  MenuItem,
+  InputLabel,
+  FormControl
 } from "@mui/material";
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { SelectChangeEvent } from "@mui/material/Select";
 
-const DetalleProyecto = () => {
+const EditarProyecto = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [proyecto, setProyecto] = useState<any>(null);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
-  const [openDialog, setOpenDialog] = useState(false);
+  const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    axios.get(`/projects/${id}`)
-      .then(res => setProyecto(res.data))
+    axios
+      .get(`/projects/${id}`)
+      .then((res) => setProyecto(res.data))
       .catch(() => setError("No se pudo cargar el proyecto"));
   }, [id]);
 
-  interface Window {
-  webkitAudioContext?: typeof AudioContext;
- }
-
-    const beep = () => {
-     const audioCtx = new (window.AudioContext)();
-    const oscillator = audioCtx.createOscillator();
-    const gainNode = audioCtx.createGain();
-
-    oscillator.connect(gainNode);
-    gainNode.connect(audioCtx.destination);
-
-    oscillator.type = 'sine';
-    oscillator.frequency.setValueAtTime(600, audioCtx.currentTime);
-    gainNode.gain.setValueAtTime(0.2, audioCtx.currentTime);
-
-    oscillator.start();
-    oscillator.stop(audioCtx.currentTime + 0.2);
-    };
-
-  const handleDelete = async () => {
+ const handleChange = (e: React.ChangeEvent<{ name?: string; value: unknown }>) => {
+  const { name, value } = e.target;
+  if (!name) return;
+  setProyecto((prev: any) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
+  const handleUpdate = async () => {
     try {
-      await axios.delete(`/projects/${id}`);
-      beep();
-      setSuccess(true);
+      await axios.put(`/projects/${id}`, {
+        name: proyecto.name,
+        description: proyecto.description,
+        status: proyecto.status,
+        budget: proyecto.budget,
+        start_date: proyecto.start_date,
+        end_date: proyecto.end_date,
+        project_type_id: proyecto.project_type.id, // asegúrate de enviar solo el id
+        owner_id: proyecto.owner_id,
+      });
+
+      setSuccess("Proyecto actualizado correctamente");
       setTimeout(() => navigate("/dashboard"), 1500);
     } catch {
-      setError("No se pudo eliminar el proyecto");
+      setError("Error al actualizar el proyecto");
     }
   };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { name, value } = e.target;
+  setProyecto((prev: any) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
+
+  const handleSelectChange = (e: SelectChangeEvent) => {
+    const { name, value } = e.target;
+    setProyecto((prev: any) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
 
   if (error) {
     return <Alert severity="error" sx={{ mt: 4 }}>{error}</Alert>;
@@ -70,59 +82,85 @@ const DetalleProyecto = () => {
   if (!proyecto) return null;
 
   return (
-    <Container maxWidth="md">
+    <Container maxWidth="sm">
       <Paper elevation={4} sx={{ p: 4, mt: 6 }}>
-        <Typography variant="h4" fontWeight={600} gutterBottom>
-          {proyecto.name}
+        <Typography variant="h5" gutterBottom fontWeight={600}>
+          Editar Proyecto
         </Typography>
-        <Typography variant="subtitle1" sx={{ mb: 2 }}>
-          {proyecto.description}
-        </Typography>
-        <Chip label={`Tipo: ${proyecto.project_type.name}`} sx={{ mb: 2 }} />
-        <Typography>Estado: {proyecto.status}</Typography>
-        <Typography>Inicio: {proyecto.start_date}</Typography>
-        <Typography>Fin: {proyecto.end_date}</Typography>
-        <Typography>Presupuesto: ${proyecto.budget}</Typography>
-        <Typography>Propietario ID: {proyecto.owner_id}</Typography>
 
-        <Collapse in={success}>
-          <Alert
-            icon={<CheckCircleIcon fontSize="inherit" />}
-            severity="success"
-            sx={{ mt: 3 }}
+        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+
+        <TextField
+          label="Nombre"
+          name="name"
+          value={proyecto.name}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Descripción"
+          name="description"
+          value={proyecto.description}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+        />
+        <TextField
+          label="Presupuesto"
+          name="budget"
+          type="number"
+          value={proyecto.budget}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+        />
+        <FormControl fullWidth margin="normal">
+          <InputLabel id="estado-label">Estado</InputLabel>
+          <Select
+            labelId="estado-label"
+            name="status"
+            value={proyecto.status}
+            label="Estado"
+            onChange={handleSelectChange}
           >
-            Proyecto eliminado correctamente
-          </Alert>
-        </Collapse>
+            <MenuItem value="en progreso">En progreso</MenuItem>
+            <MenuItem value="completado">Completado</MenuItem>
+            <MenuItem value="pendiente">Pendiente</MenuItem>
+          </Select>
+        </FormControl>
+        <TextField
+          label="Fecha de inicio"
+          name="start_date"
+          type="date"
+          value={proyecto.start_date}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+          InputLabelProps={{ shrink: true }}
+        />
+        <TextField
+          label="Fecha de fin"
+          name="end_date"
+          type="date"
+          value={proyecto.end_date}
+          onChange={handleChange}
+          fullWidth
+          margin="normal"
+          InputLabelProps={{ shrink: true }}
+        />
 
-        <Box mt={4} display="flex" gap={2}>
-          <Button variant="outlined" onClick={() => navigate("/dashboard")}>
-            Volver
+        <Box display="flex" justifyContent="space-between" mt={4}>
+          <Button variant="outlined" onClick={() => navigate(-1)}>
+            Cancelar
           </Button>
-          <Button variant="contained" onClick={() => navigate(`/editar/${id}`)}>
-            Editar
-          </Button>
-          <Button variant="contained" color="error" onClick={() => setOpenDialog(true)}>
-            Eliminar
+          <Button variant="contained" onClick={handleUpdate}>
+            Guardar Cambios
           </Button>
         </Box>
       </Paper>
-
-      {/* Diálogo de Confirmación */}
-      <Dialog open={openDialog} onClose={() => setOpenDialog(false)}>
-        <DialogTitle>¿Eliminar proyecto?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Esta acción no se puede deshacer. ¿Estás seguro que deseas eliminar este proyecto?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
-          <Button onClick={handleDelete} color="error">Eliminar</Button>
-        </DialogActions>
-      </Dialog>
     </Container>
   );
 };
 
-export default DetalleProyecto;
+export default EditarProyecto;
